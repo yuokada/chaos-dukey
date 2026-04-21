@@ -34,40 +34,16 @@ jobs:
         if-no-files-found: ignore
     - name: Test `example` project with Chaos Dukey and confirm it fails
       if: ${{ matrix.java_version == 21 }}
-      continue-on-error: true  # For debug
       env:
         CHAOS_DUKEY_ENABLED: true
       run: |
-        set -euo pipefail
-        ./gradlew shadowJar
-        cd example
-        ln -sf ../build/libs/chaos-dukey-*-all.jar chaos-dukey-all.jar
-        if ./gradlew --info test; then
-          echo "::error title=Chaos Dukey did not inject chaos::\`./gradlew test\` unexpectedly succeeded with CHAOS_DUKEY_ENABLED=true. JobQueueTest was supposed to fail with 'expected: <250> but was: <300>'. Check example/chaos-dukey-100-percent.properties (delay.percentage must be 100) and the -javaagent wiring in example/build.gradle.kts."
-          exit 1
-        fi
-        report=build/reports/tests/test/classes/org.komamitsu.example.jobqueue.JobQueueTest.html
-        if [ ! -f "$report" ]; then
-          echo "::error title=Test report missing::Expected $report but it was not produced. Gradle may have failed before running the test."
-          exit 1
-        fi
-        if ! grep -q 'expected: &lt;250&gt; but was: &lt;300&gt;' "$report"; then
-          echo "::error title=Unexpected failure mode::JobQueueTest failed, but not with the expected assertion 'expected: <250> but was: <300>'. See the uploaded example test report artifact."
-          exit 1
-        fi
+        ./gradlew shadowJar &&
+        cd example &&
+        ln -s ../build/libs/chaos-dukey-*-all.jar chaos-dukey-all.jar &&
+        ! ./gradlew test &&
+        grep 'expected: &lt;250&gt; but was: &lt;300&gt;' build/reports/tests/test/classes/org.komamitsu.example.jobqueue.JobQueueTest.html
     - name: Test `example` project without Chaos Dukey and confirm it succeeds
       if: ${{ matrix.java_version == 21 }}
       run: |
-        set -euo pipefail
-        cd example
-        if ! ./gradlew test; then
-          echo "::error title=Baseline example test failed::\`./gradlew test\` failed without CHAOS_DUKEY_ENABLED. This is the baseline run and it should always pass. See the uploaded example test report artifact."
-          exit 1
-        fi
-    - name: Upload example test reports
-      if: ${{ failure() && matrix.java_version == 21 }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: example_gradle_test_reports_java_${{ matrix.java_version }}
-        path: example/build/reports/tests/test
-        if-no-files-found: ignore
+        cd example &&
+        ./gradlew test
