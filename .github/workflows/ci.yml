@@ -35,10 +35,8 @@ jobs:
       with:
         gradle-version: ${{ matrix.gradle_version }}
 
-    - name: Run gradle wrapper
-      run:  ./gradlew wrapper --gradle-version ${{ matrix.gradle_version }}
     - name: Run checks
-      run: ./gradlew check
+      run: gradle check
     - name: Upload Gradle test reports
       uses: actions/upload-artifact@v4
       with:
@@ -49,13 +47,13 @@ jobs:
       env:
         CHAOS_DUKEY_ENABLED: true
       run: |
-        ./gradlew shadowJar &&
+        gradle shadowJar &&
         cd example &&
         ln -s ../build/libs/chaos-dukey-*-all.jar chaos-dukey-all.jar &&
-        ! ./gradlew test &&
+        ! gradle test &&
         grep 'expected: &lt;250&gt; but was: &lt;300&gt;' build/reports/tests/test/classes/org.komamitsu.example.jobqueue.JobQueueTest.html
     - name: Test `example` project without Chaos Dukey and confirm it succeeds
       if: ${{ matrix.java_version == 21 }}
       run: |
         cd example &&
-        ./gradlew test
+        gradle test
