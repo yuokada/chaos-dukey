@@ -28,7 +28,7 @@ jobs:
     - name: Upload Gradle test reports
       uses: actions/upload-artifact@v4
       with:
-        name: gradle_test_reports
+        name: gradle_test_reports_java_${{ matrix.java_version }}
         path: build/reports/tests/test
     - name: Test `example` project with Chaos Dukey and confirm it fails
       if: ${{ matrix.java_version == 21 }}
