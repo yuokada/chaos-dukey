@@ -35,6 +35,8 @@ jobs:
       with:
         gradle-version: ${{ matrix.gradle_version }}
 
+    - name: Run gradle wrapper
+      run:  ./gradlew wrapper --gradle-version ${{ matrix.gradle_version }}
     - name: Run checks
       run: ./gradlew check
     - name: Upload Gradle test reports
